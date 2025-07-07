@@ -6,16 +6,24 @@ This project demonstrates how to build a chatbot that retrieves relevant documen
 
 ## Installation
 
-[1] Clone this repository:
+Clone this repository:
 
 ```bash
-git clone git@github.com:naokishibuya/llm-tests.git
+git clone git@github.com:naokishibuya/llm-rag-chat-demo.git
 ```
 
-[2] Set up a Python virtual environment and install the required packages:
+Below, we assume you are in the root directory of the cloned repository whenever we do 'cd <subfolder>'.
 
 ```bash
-cd llm-tests
+cd llm-rag-chat-demo
+```
+
+## Setup the Backend
+
+Set up a Python virtual environment and install the required packages:
+
+```bash
+cd backend
 
 python3 -m venv venv
 source venv/bin/activate
@@ -24,7 +32,7 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-[3] Install curl if not already installed
+Install curl (if not already installed)
 
 ```bash
 sudo snap install curl
@@ -34,7 +42,7 @@ sudo snap install curl
 sudo apt-get install curl
 ```
 
-[4] Install Ollama CLI
+Install Ollama CLI (If not already installed)
 
 [Ollama](https://github.com/ollama/ollama) is a command-line interface (CLI) for running large language models (LLMs) locally on your machine.
 
@@ -48,26 +56,24 @@ Install mistral
 ollama pull mistral
 ```
 
-[5] Install Node + npm
-
-```bash
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt-get install -y nodejs
-```
-
 ## Run the Backend
 
 Run the FastAPI server:
 
 ```bash
-cd backend
 uvicorn main:app --reload
 ```
 
 Then, open your web browser and navigate to `http://localhost:8000/docs` to interact with the API.
 
+## Setup the Frontend
 
-## Run the Frontend
+Install Node + npm (if not already installed)
+
+```bash
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs
+```
 
 Navigate to the `frontend` directory and install the required packages:
 
@@ -76,7 +82,9 @@ cd frontend
 npm install
 ```
 
-Then, start the React development server:
+## Run the Frontend
+
+Start the React development server:
 
 ```bash
 npm start

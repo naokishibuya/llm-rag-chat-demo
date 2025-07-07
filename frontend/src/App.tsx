@@ -1,10 +1,7 @@
-import React from 'react';
-import Chat from './Chat';
-
 function App() {
   return (
     <div>
-      <Chat />
+      <h1>LLM RAG Chat</h1>
     </div>
   );
 }

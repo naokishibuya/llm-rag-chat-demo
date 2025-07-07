@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import axios from 'axios';
 
 const Chat: React.FC = () => {
@@ -15,18 +15,24 @@ const Chat: React.FC = () => {
 
     try {
       const response = await axios.post('http://localhost:8000/chat', {
-        question: question
+        question: question,
       });
       setAnswer(response.data.answer);
     } catch (err) {
-      setError('Error calling the server');
+      setError('Error calling the backend');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ maxWidth: 600, margin: '2rem auto', padding: '1rem', border: '1px solid #ccc', borderRadius: '8px' }}>
+    <div style={{
+      maxWidth: '600px',
+      margin: '2rem auto',
+      padding: '1rem',
+      border: '1px solid #ccc',
+      borderRadius: '8px'
+    }}>
       <h2>LLM RAG Chat</h2>
       <form onSubmit={handleSubmit}>
         <textarea
@@ -41,7 +47,12 @@ const Chat: React.FC = () => {
         </button>
       </form>
       {answer && (
-        <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
+        <div style={{
+          marginTop: '1rem',
+          padding: '1rem',
+          backgroundColor: '#f5f5f5',
+          borderRadius: '4px'
+        }}>
           <strong>Answer:</strong>
           <p>{answer}</p>
         </div>
