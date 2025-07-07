@@ -7,6 +7,8 @@ npm create vite@latest frontend -- --template react-ts
 
 cd frontend
 npm install axios  # to call FastAPI backend
+npm install -D tailwindcss postcss autoprefixer  # for styling
+npx tailwindcss init -p  # initialize Tailwind CSS
 ```
 
 # React + TypeScript + Vite
