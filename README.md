@@ -1,4 +1,8 @@
-# LLM Tests
+# LLM RAG Chat Demo
+
+A full-stack demo of Retrieval-Augmented Generation (RAG) chat powered by LlamaIndex, LangChain, FastAPI, and React.
+
+This project demonstrates how to build a chatbot that retrieves relevant document context from a vector database and generates coherent answers using an LLM.
 
 ## Installation
 
@@ -51,11 +55,31 @@ curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt-get install -y nodejs
 ```
 
-## Run RAG demo
+## Run the Backend
 
-This is a simple demo of a Retrieval-Augmented Generation (RAG) system using the Mistral model from Ollama.
+Run the FastAPI server:
 
 ```bash
-python src/rag_demo.py
+cd backend
+uvicorn main:app --reload
 ```
 
+Then, open your web browser and navigate to `http://localhost:8000/docs` to interact with the API.
+
+
+## Run the Frontend
+
+Navigate to the `frontend` directory and install the required packages:
+
+```bash
+cd frontend
+npm install
+```
+
+Then, start the React development server:
+
+```bash
+npm start
+```
+
+This will open the application in your default web browser at `http://localhost:3000`.
