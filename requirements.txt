@@ -1,0 +1,14 @@
+langchain==0.3.26
+langchain-community==0.3.27
+
+langchain==0.3.26
+langchain-community==0.3.27
+langchain-core==0.3.68
+langchain-huggingface==0.3.0
+llama-index==0.12.46
+llama-index-core==0.12.46
+llama-index-embeddings-huggingface==0.5.5
+llama-index-llms-langchain==0.6.1
+sentence-transformers==5.0.0
+torch==2.7.1
+transformers==4.53.1
