@@ -1,7 +1,8 @@
 import os
-from fastapi import FastAPI
 from pydantic import BaseModel
+from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
+from fastapi.middleware.cors import CORSMiddleware
 from rag_engine import build_query_engine
 
 
@@ -16,12 +17,13 @@ query_engine = build_query_engine(DATA_DIR)
 
 # Create FastAPI app instance
 app = FastAPI()
-
-
-# Optional: redirect root to docs
-@app.get("/")
-async def root():
-    return RedirectResponse(url="/docs")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # Request/Response Models
@@ -30,6 +32,12 @@ class PromptRequest(BaseModel):
 
 class PromptResponse(BaseModel):
     answer: str
+
+
+# Optional: redirect root to docs
+@app.get("/")
+async def root():
+    return RedirectResponse(url="/docs")
 
 
 # Chat endpoint

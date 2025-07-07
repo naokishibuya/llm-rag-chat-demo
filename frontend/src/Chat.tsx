@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 
-const Chat: React.FC = () => {
+const Chat = () => {
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -42,7 +42,7 @@ const Chat: React.FC = () => {
           style={{ width: '100%', marginBottom: '1rem' }}
           placeholder="Ask your question..."
         />
-        <button type="submit" disabled={loading}>
+        <button type="submit" disabled={loading || !question.trim()}>
           {loading ? 'Thinking...' : 'Ask'}
         </button>
       </form>
