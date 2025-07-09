@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 
 type Message = {
@@ -6,25 +6,37 @@ type Message = {
   content: string;
 };
 
+const createMessage = (role: 'user' | 'assistant', content: string): Message => ({
+  role,
+  content
+});
+
 export default function ChatComponent() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const lastMsgRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (lastMsgRef.current) {
+      lastMsgRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [messages]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
 
-    const newMessages = [...messages, { role: 'user', content: input }];
+    const newMessages: Message[] = [...messages, createMessage('user', input)];
     setMessages(newMessages);
     setInput('');
     setLoading(true);
 
     try {
       const res = await axios.post('http://localhost:8000/chat', { messages: newMessages });
-      setMessages([...newMessages, { role: 'assistant', content: res.data.answer }]);
+      setMessages([...newMessages, createMessage('assistant', res.data.answer)]);
     } catch {
-      setMessages([...newMessages, { role: 'assistant', content: '⚠️ Error contacting backend.' }]);
+      setMessages([...newMessages, createMessage('assistant', 'Error contacting backend.')]);
     } finally {
       setLoading(false);
     }
@@ -37,7 +49,8 @@ export default function ChatComponent() {
           <p className="text-gray-400 text-center">Start the conversation!</p>
         )}
         {messages.map((msg, idx) => (
-          <div key={idx} className={`flex mb-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+          <div key={idx} ref={idx === messages.length - 1 ? lastMsgRef : undefined}
+            className={`flex mb-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-[75%] p-3 rounded-lg shadow-sm ${msg.role === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'}`}>
               {msg.content}
             </div>
