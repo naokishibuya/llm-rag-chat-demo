@@ -1,9 +1,20 @@
+from typing import List
 from langchain_ollama.chat_models import ChatOllama
 from llama_index.core.chat_engine import ContextChatEngine
 from llama_index.core.chat_engine.types import ChatMessage
+from llama_index.core.retrievers import BaseRetriever
+from llama_index.core.schema import NodeWithScore
 from llama_index.llms.langchain import LangChainLLM
 from schemas import ChatRequest
 from rag_index import rag_index
+
+
+INSTRUCTION_MESSAGE = ChatMessage(role="system", content="""
+You are a helpful assistant that can handle both ordinary conversation and answering questions using retrieved context.
+If the user is simply greeting or chatting, respond naturally and politely as in normal conversation.
+If the user asks a factual question or about the retrieved context, answer clearly and concisely, 
+keeping it short (1–2 sentences) and avoiding unnecessary reasoning loops or speculation.
+""")
 
 
 # ----------------------------------------------------------------------------------------------------
@@ -11,22 +22,38 @@ from rag_index import rag_index
 # ----------------------------------------------------------------------------------------------------
 llm = ChatOllama(
     model="mistral",
-    temperature=0.2,  # Optional: make it more consistent
-    system=(
-        "You are a helpful assistant that answers clearly and concisely "
-        "using retrieved context. Avoid unnecessary reasoning loops."
-    )
+    temperature=0.0,
 )
 llm = LangChainLLM(llm)  # Wrap in LlamaIndex's LangChainLLM for compatibility
 
 
 # ----------------------------------------------------------------------------------------------------
+# Create a retriever that sanitizes the metadata
+# ----------------------------------------------------------------------------------------------------
+class SanitizedRetriever(BaseRetriever):
+    def __init__(self, base_retriever):
+        self.base = base_retriever
+
+    def _sanitize(self, node: NodeWithScore) -> NodeWithScore:
+        node.metadata.pop("source", None)
+        return node
+
+    def _retrieve(self, query: str) -> List[NodeWithScore]:
+        results = self.base.retrieve(query)
+        return [self._sanitize(r) for r in results]
+
+    async def _aretrieve(self, query: str) -> List[NodeWithScore]:
+        results = await self.base.aretrieve(query)
+        return [self._sanitize(r) for r in results]
+
+
+# ----------------------------------------------------------------------------------------------------
 # Build the chat engine ONCE at startup
 # ----------------------------------------------------------------------------------------------------
+retriever = SanitizedRetriever(rag_index.as_retriever())
 chat_engine = ContextChatEngine.from_defaults(
-    retriever=rag_index.as_retriever(),
+    retriever=retriever,
     llm=llm,
-    # verbose=True # Uncomment for debugging to see what's happening
 )
 
 
@@ -39,26 +66,17 @@ def process_chat(request: ChatRequest) -> str:
     Converts FastAPI's ChatRequest to LlamaIndex's ChatEngine input.
     """
 
-    messages_for_history = []
-    last_user_message = ""
+    # Get the last user message
+    if request.messages[-1].role != "user":
+        return "Error: Last message must be from the user."
+    last_user_message = request.messages.pop().content
 
-    # Iterate through messages to build history and find the last user message
-    for i, m in enumerate(request.messages):
-        if i == len(request.messages) - 1 and m.role == "user":
-            last_user_message = m.content
-        else:
-            messages_for_history.append(ChatMessage(
-                role=m.role,
-                content=m.content,
-            ))
-
-    if not last_user_message:
-        return "Error: No user message found in conversation."
+    # Convert messages to ChatMessage format
+    messages_for_history = [ChatMessage(role=m.role, content=m.content) for m in request.messages]
 
     # Call LlamaIndex ChatEngine
     response = chat_engine.chat(
         message=last_user_message,
-        chat_history=messages_for_history # Pass the history without the current message
+        chat_history=[INSTRUCTION_MESSAGE, *messages_for_history],
     )
-
     return response.response

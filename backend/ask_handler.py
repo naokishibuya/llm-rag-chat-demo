@@ -61,6 +61,7 @@ llm = OllamaLLM(model="mistral")
 # ----------------------------------------------------------------------------------------------------
 ask_engine = rag_index.as_query_engine(
     llm=llm,
+    response_mode="compact",  # or "simple"
 )
 
 
