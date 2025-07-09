@@ -1,6 +1,8 @@
 # LLM RAG Chat Demo
 
-A full-stack demo of Retrieval-Augmented Generation (RAG) chat powered by LlamaIndex, LangChain, FastAPI, and React.
+A full-stack demo of Retrieval-Augmented Generation (RAG) chat powered by LlamaIndex, LangChain, FastAPI, and React (TypeScript).
+
+![](images/chat-mode.png)
 
 This project demonstrates how to build a chatbot that retrieves relevant document context from a vector database and generates coherent answers using an LLM.
 
