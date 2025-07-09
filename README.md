@@ -64,7 +64,7 @@ Run the FastAPI server:
 uvicorn main:app --reload
 ```
 
-Then, open your web browser and navigate to `http://localhost:8000/docs` to interact with the API.
+For testing the backend, you can open `http://localhost:8000/docs` to interact with the API.
 
 ## Setup the Frontend
 
@@ -90,4 +90,4 @@ Start the React development server:
 npm run dev
 ```
 
-This will open the application in your default web browser at `http://localhost:3000`.
+This will open the application in your default web browser at `http://localhost:5173`.

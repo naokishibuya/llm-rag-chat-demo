@@ -1,6 +1,4 @@
 """
-rag_engine.py
-
 This module defines a simple Retrieval-Augmented Generation (RAG) setup using LlamaIndex and Ollama.
 
 --------------------
@@ -46,30 +44,32 @@ NOTES:
 
 """
 
-from llama_index.core import SimpleDirectoryReader, VectorStoreIndex
-from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+import os
 from langchain_ollama.llms import OllamaLLM
+from schemas import AskRequest
+from rag_index import rag_index
 
 
-# Load and index documents once at startup
-def build_query_engine(data_dir: str) -> VectorStoreIndex:
+# ----------------------------------------------------------------------------------------------------
+# Create the Ollama LLM
+# ----------------------------------------------------------------------------------------------------
+llm = OllamaLLM(model="mistral")
+
+
+# ----------------------------------------------------------------------------------------------------
+# Build the RAG query engine ONCE at startup
+# ----------------------------------------------------------------------------------------------------
+ask_engine = rag_index.as_query_engine(
+    llm=llm,
+)
+
+
+# ----------------------------------------------------------------------------------------------------
+# Process a single ask request with no history using RAG
+# ----------------------------------------------------------------------------------------------------
+def process_ask(request: AskRequest) -> str:
     """
-    Build a query engine for RAG using LlamaIndex and Ollama.
-    Args:
-        data_dir (str): Directory containing text documents to load.
-    Returns:
-        VectorStoreIndex: The query engine ready for use.
+    Classic single-turn RAG: user asks one question, no history.
     """
-    print("Loading documents from:", data_dir)
-    documents = SimpleDirectoryReader(data_dir).load_data()
-
-    print("Embedding and indexing documents...")
-    embed_model = HuggingFaceEmbedding(model_name="all-MiniLM-L6-v2")
-    index = VectorStoreIndex.from_documents(documents, embed_model=embed_model)
-
-    print("Setting up query engine with Ollama's Mistral model...")
-    llm = OllamaLLM(model="mistral")
-    query_engine = index.as_query_engine(llm=llm)
-
-    print("Query engine ready.")
-    return query_engine
+    response = ask_engine.query(request.question)
+    return response.response

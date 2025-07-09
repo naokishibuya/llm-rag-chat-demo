@@ -1,21 +1,12 @@
-import os
-from pydantic import BaseModel
+from typing import List
 from fastapi import FastAPI
-from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
-from rag_engine import build_query_engine
+from schemas import AskRequest, ChatRequest
+import ask_handler
+import chat_handler
 
 
-# Define the current directory and data directory
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(CURRENT_DIR, "../data")
-
-
-# Load RAG query engine once at startup
-query_engine = build_query_engine(DATA_DIR)
-
-
-# Create FastAPI app instance
+# FastAPI app setup
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -26,22 +17,13 @@ app.add_middleware(
 )
 
 
-# Request/Response Models
-class PromptRequest(BaseModel):
-    question: str
-
-class PromptResponse(BaseModel):
-    answer: str
+@app.post("/ask")
+async def ask_endpoint(request: AskRequest):
+    answer = ask_handler.process_ask(request)
+    return {"answer": answer}
 
 
-# Optional: redirect root to docs
-@app.get("/")
-async def root():
-    return RedirectResponse(url="/docs")
-
-
-# Chat endpoint
-@app.post("/chat", response_model=PromptResponse)
-async def chat(request: PromptRequest):
-    result = query_engine.query(request.question)
-    return {"answer": result.response.strip()}
+@app.post("/chat")
+async def chat_endpoint(request: ChatRequest):
+    answer = chat_handler.process_chat(request)
+    return {"answer": answer}
