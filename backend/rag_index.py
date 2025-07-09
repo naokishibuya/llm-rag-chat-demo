@@ -1,5 +1,6 @@
 # rag_index.py
 import os
+from typing import List
 from llama_index.core import SimpleDirectoryReader, VectorStoreIndex
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 
@@ -10,6 +11,10 @@ DATA_DIR = os.path.join(CURRENT_DIR, "../data")
 
 print("Loading documents...")
 documents = SimpleDirectoryReader(DATA_DIR).load_data()
+
+# remove metadata from documents
+for doc in documents:
+    doc.metadata.clear()
 
 print("Embedding and indexing...")
 embed_model = HuggingFaceEmbedding(model_name="all-MiniLM-L6-v2")

@@ -1,12 +1,9 @@
-from typing import List
 from langchain_ollama.chat_models import ChatOllama
 from llama_index.core.chat_engine import ContextChatEngine
 from llama_index.core.chat_engine.types import ChatMessage
-from llama_index.core.retrievers import BaseRetriever
-from llama_index.core.schema import NodeWithScore
 from llama_index.llms.langchain import LangChainLLM
 from schemas import ChatRequest
-from rag_index import rag_index
+from rag_index import rag_index 
 
 
 INSTRUCTION_MESSAGE = ChatMessage(role="system", content="""
@@ -28,31 +25,10 @@ llm = LangChainLLM(llm)  # Wrap in LlamaIndex's LangChainLLM for compatibility
 
 
 # ----------------------------------------------------------------------------------------------------
-# Create a retriever that sanitizes the metadata
-# ----------------------------------------------------------------------------------------------------
-class SanitizedRetriever(BaseRetriever):
-    def __init__(self, base_retriever):
-        self.base = base_retriever
-
-    def _sanitize(self, node: NodeWithScore) -> NodeWithScore:
-        node.metadata.pop("source", None)
-        return node
-
-    def _retrieve(self, query: str) -> List[NodeWithScore]:
-        results = self.base.retrieve(query)
-        return [self._sanitize(r) for r in results]
-
-    async def _aretrieve(self, query: str) -> List[NodeWithScore]:
-        results = await self.base.aretrieve(query)
-        return [self._sanitize(r) for r in results]
-
-
-# ----------------------------------------------------------------------------------------------------
 # Build the chat engine ONCE at startup
 # ----------------------------------------------------------------------------------------------------
-retriever = SanitizedRetriever(rag_index.as_retriever())
 chat_engine = ContextChatEngine.from_defaults(
-    retriever=retriever,
+    retriever=rag_index.as_retriever(),
     llm=llm,
 )
 
