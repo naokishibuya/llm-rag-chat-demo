@@ -44,25 +44,10 @@ NOTES:
 
 """
 
-import os
+from functools import lru_cache
 from langchain_ollama.llms import OllamaLLM
 from schemas import AskRequest
 from rag_index import rag_index
-
-
-# ----------------------------------------------------------------------------------------------------
-# Create the Ollama LLM
-# ----------------------------------------------------------------------------------------------------
-llm = OllamaLLM(model="mistral")
-
-
-# ----------------------------------------------------------------------------------------------------
-# Build the RAG query engine ONCE at startup
-# ----------------------------------------------------------------------------------------------------
-ask_engine = rag_index.as_query_engine(
-    llm=llm,
-    response_mode="compact",  # or "simple"
-)
 
 
 # ----------------------------------------------------------------------------------------------------
@@ -72,5 +57,26 @@ def process_ask(request: AskRequest) -> str:
     """
     Classic single-turn RAG: user asks one question, no history.
     """
+    ask_engine = _get_query_engine(request.model)
     response = ask_engine.query(request.question)
     return response.response
+
+
+# ----------------------------------------------------------------------------------------------------
+# LRU cache to reuse LLM
+# ----------------------------------------------------------------------------------------------------
+@lru_cache(maxsize=2)
+def _get_llm(model_name: str) -> OllamaLLM:
+    return OllamaLLM(model=model_name)
+
+
+# ----------------------------------------------------------------------------------------------------
+# LRU cache to reuse query engine instances
+# ----------------------------------------------------------------------------------------------------
+@lru_cache(maxsize=2)
+def _get_query_engine(model_name: str):
+    llm = _get_llm(model_name)
+    return rag_index.as_query_engine(
+        llm=_get_llm(model_name),
+        response_mode="compact",
+    )

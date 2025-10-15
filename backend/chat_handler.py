@@ -1,3 +1,4 @@
+from functools import lru_cache
 from langchain_ollama.chat_models import ChatOllama
 from llama_index.core.chat_engine import ContextChatEngine
 from llama_index.core.chat_engine.types import ChatMessage
@@ -50,9 +51,30 @@ def process_chat(request: ChatRequest) -> str:
     # Convert messages to ChatMessage format
     messages_for_history = [ChatMessage(role=m.role, content=m.content) for m in request.messages]
 
+    # Retrieve ChatEngine instance (cached)
+    chat_engine = _get_chat_engine(request.model)
+
     # Call LlamaIndex ChatEngine
     response = chat_engine.chat(
         message=last_user_message,
         chat_history=[INSTRUCTION_MESSAGE, *messages_for_history],
     )
     return response.response
+
+
+# ----------------------------------------------------------------------------------------------------
+# LRU cache to reuse LLM
+# ----------------------------------------------------------------------------------------------------
+@lru_cache(maxsize=4)
+def _get_langchain_llm(model_name: str) -> LangChainLLM:
+    return LangChainLLM(ChatOllama(model=model_name, temperature=0.0))
+
+# ----------------------------------------------------------------------------------------------------
+# LRU cache to reuse chat engine instances
+# ----------------------------------------------------------------------------------------------------
+@lru_cache(maxsize=4)
+def _get_chat_engine(model_name: str) -> ContextChatEngine:
+    return ContextChatEngine.from_defaults(
+        retriever=rag_index.as_retriever(),
+        llm=_get_langchain_llm(model_name),
+    )

@@ -1,7 +1,12 @@
 import { useState } from 'react';
 import axios from 'axios';
+import type { ModelId } from './modelOptions';
 
-export default function AskComponent() {
+type AskProps = {
+  model: ModelId;
+};
+
+export default function AskComponent({ model }: AskProps) {
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
   const [loading, setLoading] = useState(false);
@@ -14,7 +19,7 @@ export default function AskComponent() {
     setAnswer('');
 
     try {
-      const res = await axios.post('http://localhost:8000/ask', { question });
+      const res = await axios.post('http://localhost:8000/ask', { question, model });
       setAnswer(res.data.answer);
     } catch {
       setAnswer('⚠️ Error contacting backend.');

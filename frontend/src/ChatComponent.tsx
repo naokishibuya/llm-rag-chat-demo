@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
+import type { ModelId } from './modelOptions';
 
 type Message = {
   role: 'user' | 'assistant';
@@ -11,7 +12,11 @@ const createMessage = (role: 'user' | 'assistant', content: string): Message => 
   content
 });
 
-export default function ChatComponent() {
+type ChatProps = {
+  model: ModelId;
+};
+
+export default function ChatComponent({ model }: ChatProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -33,7 +38,7 @@ export default function ChatComponent() {
     setLoading(true);
 
     try {
-      const res = await axios.post('http://localhost:8000/chat', { messages: newMessages });
+      const res = await axios.post('http://localhost:8000/chat', { messages: newMessages, model });
       setMessages([...newMessages, createMessage('assistant', res.data.answer)]);
     } catch {
       setMessages([...newMessages, createMessage('assistant', 'Error contacting backend.')]);

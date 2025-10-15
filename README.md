@@ -1,10 +1,24 @@
 # LLM RAG Chat Demo
 
-A full-stack demo of Retrieval-Augmented Generation (RAG) chat powered by LlamaIndex, LangChain, FastAPI, and React (TypeScript).
+## Overview
+
+This project is a **full-stack Retrieval-Augmented Generation (RAG) chat demo** built to showcase how large language models can answer questions grounded in external knowledge.
+
+**Tech Stack:**
+
+* **Frontend:** React (TypeScript)
+* **Backend:** FastAPI (Python)
+* **LLM:** Models served locally via Ollama (Mistral, GPT-OSS)
+* **Embeddings:** Hugging Face transformer model via HuggingFaceEmbedding
+* **Vector Database:** LlamaIndex SimpleVectorStore (in-memory, managed through VectorStoreIndex)
+* **Frameworks:** LangChain, LlamaIndex
+
+**How it works:**
+The application ingests documents, converts them into vector embeddings, and stores them in a FAISS index. When a user asks a question, the system retrieves the most relevant text chunks and passes them — along with the query — to the Mistral model to generate accurate, context-aware responses.
 
 ![](images/chat-mode.png)
 
-This project demonstrates how to build a chatbot that retrieves relevant document context from a vector database and generates coherent answers using an LLM.
+This demo illustrates the core workflow behind modern RAG systems: **document retrieval + LLM reasoning**, wrapped in a simple web interface.
 
 ## Installation
 
@@ -56,7 +70,12 @@ Install mistral
 
 ```bash
 ollama pull mistral
+ollama pull gpt-oss
 ```
+
+`ollama list` to verify the installation.
+
+`sudo systemctl restart ollama` if running as a service, or `ollama restart` if running it manually.
 
 ## Run the Backend
 
@@ -73,8 +92,18 @@ For testing the backend, you can open `http://localhost:8000/docs` to interact w
 Install Node + npm (if not already installed)
 
 ```bash
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt-get install -y nodejs
+# Install nvm (Node Version Manager)
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh | bash
+
+# Load nvm into your shell (or restart the terminal)
+source ~/.bashrc
+
+# Install the latest LTS version of Node.js (includes npm)
+nvm install --lts
+
+# Verify installation
+node -v
+npm -v
 ```
 
 Navigate to the `frontend` directory and install the required packages:
