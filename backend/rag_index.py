@@ -1,6 +1,5 @@
 # rag_index.py
 import os
-from typing import List
 from llama_index.core import SimpleDirectoryReader, VectorStoreIndex
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 

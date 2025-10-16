@@ -2,14 +2,32 @@ import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import type { ModelId } from './modelOptions';
 
+type ModerationInfo = {
+  verdict: string;
+  severity: string;
+  categories: string[];
+  rationale?: string | null;
+};
+
+type ChatResponse = {
+  answer: string;
+  intent: string;
+  routing_rationale?: string | null;
+  moderation: ModerationInfo;
+};
+
+type ResponseMeta = Omit<ChatResponse, 'answer'>;
+
 type Message = {
   role: 'user' | 'assistant';
   content: string;
+  meta?: ResponseMeta;
 };
 
-const createMessage = (role: 'user' | 'assistant', content: string): Message => ({
+const createMessage = (role: 'user' | 'assistant', content: string, meta?: ResponseMeta): Message => ({
   role,
-  content
+  content,
+  meta
 });
 
 type ChatProps = {
@@ -32,16 +50,20 @@ export default function ChatComponent({ model }: ChatProps) {
     e.preventDefault();
     if (!input.trim()) return;
 
-    const newMessages: Message[] = [...messages, createMessage('user', input)];
-    setMessages(newMessages);
+    const userMessage = createMessage('user', input);
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
     setInput('');
     setLoading(true);
 
+    const payloadMessages = updatedMessages.map(({ role, content }) => ({ role, content }));
+
     try {
-      const res = await axios.post('http://localhost:8000/chat', { messages: newMessages, model });
-      setMessages([...newMessages, createMessage('assistant', res.data.answer)]);
+      const res = await axios.post<ChatResponse>('http://localhost:8000/chat', { messages: payloadMessages, model });
+      const { answer, ...meta } = res.data;
+      setMessages([...updatedMessages, createMessage('assistant', answer, meta)]);
     } catch {
-      setMessages([...newMessages, createMessage('assistant', 'Error contacting backend.')]);
+      setMessages([...updatedMessages, createMessage('assistant', 'Error contacting backend.')]);
     } finally {
       setLoading(false);
     }
@@ -54,10 +76,25 @@ export default function ChatComponent({ model }: ChatProps) {
           <p className="text-gray-400 text-center">Start the conversation!</p>
         )}
         {messages.map((msg, idx) => (
-          <div key={idx} ref={idx === messages.length - 1 ? lastMsgRef : undefined}
-            className={`flex mb-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[75%] p-3 rounded-lg shadow-sm ${msg.role === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'}`}>
-              {msg.content}
+          <div
+            key={idx}
+            ref={idx === messages.length - 1 ? lastMsgRef : undefined}
+            className={`flex mb-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+          >
+            <div
+              className={`max-w-[75%] p-3 rounded-lg shadow-sm ${
+                msg.role === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'
+              }`}
+            >
+              <div>{msg.content}</div>
+              {msg.role === 'assistant' && msg.meta && (
+                <div className="mt-2 pt-2 border-t border-gray-300 text-xs text-gray-700 space-y-1">
+                  <div>
+                    <span className="font-semibold">Classification:</span> {msg.meta.intent},{' '}
+                    <span className="font-semibold">Permission:</span> {msg.meta.moderation.verdict}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         ))}

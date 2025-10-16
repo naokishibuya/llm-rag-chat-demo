@@ -1,4 +1,3 @@
-from typing import List
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from schemas import AskRequest, ChatRequest
@@ -19,11 +18,9 @@ app.add_middleware(
 
 @app.post("/ask")
 async def ask_endpoint(request: AskRequest):
-    answer = ask_handler.process_ask(request)
-    return {"answer": answer}
+    return ask_handler.process_ask(request)
 
 
 @app.post("/chat")
 async def chat_endpoint(request: ChatRequest):
-    answer = chat_handler.process_chat(request)
-    return {"answer": answer}
+    return chat_handler.process_chat(request)
