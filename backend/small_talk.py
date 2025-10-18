@@ -10,7 +10,7 @@ Respond warmly and concisely (max 2 sentences) to the user message:
 \"\"\"{user_text}\"\"\"
 """
     try:
-        llm = get_ollama_llm(model_name, temperature=0.6, num_ctx=1024)
+        llm = get_ollama_llm(model_name, temperature=0.6)
         return llm.invoke(prompt).strip()
     except Exception:
         return "Hi there! How can I help you today?"
