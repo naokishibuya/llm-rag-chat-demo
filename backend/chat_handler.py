@@ -3,6 +3,7 @@ from schemas import ChatRequest
 from small_talk import generate_small_talk_response
 from routing import analyze_message, IntentLabel, build_response_payload
 from llm_cache import get_chat_engine
+from finance_quotes import render_quote_response
 from logger import get_logger
 
 
@@ -20,7 +21,7 @@ keeping it short (1–2 sentences) and avoiding unnecessary reasoning loops or s
 # ----------------------------------------------------------------------------------------------------
 # Process chat with full conversation history with RAG, too
 # ----------------------------------------------------------------------------------------------------
-def process_chat(request: ChatRequest) -> dict[str, str]:
+async def process_chat(request: ChatRequest) -> dict[str, str]:
     """
     Handle a full conversation using RAG + ChatOllama.
     Converts FastAPI's ChatRequest to LlamaIndex's ChatEngine input.
@@ -47,6 +48,10 @@ def process_chat(request: ChatRequest) -> dict[str, str]:
 
     if decision.intent == IntentLabel.SMALL_TALK:
         response_text = generate_small_talk_response(last_user_message, request.model.value)
+        return build_response_payload(response_text, decision)
+
+    if decision.intent == IntentLabel.FINANCE_QUOTE:
+        response_text = await render_quote_response(last_user_message)
         return build_response_payload(response_text, decision)
 
     if decision.intent == IntentLabel.MEMORY_WRITE:

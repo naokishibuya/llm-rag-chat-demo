@@ -48,6 +48,7 @@ from schemas import AskRequest
 from routing import analyze_message, IntentLabel, build_response_payload
 from small_talk import generate_small_talk_response
 from llm_cache import get_query_engine
+from finance_quotes import render_quote_response
 from logger import get_logger
 
 
@@ -57,7 +58,7 @@ LOGGER = get_logger(__name__)
 # ----------------------------------------------------------------------------------------------------
 # Process a single ask request with no history using RAG
 # ----------------------------------------------------------------------------------------------------
-def process_ask(request: AskRequest) -> dict[str, str]:
+async def process_ask(request: AskRequest) -> dict[str, str]:
     """
     Classic single-turn RAG: user asks one question, no history.
     """
@@ -77,6 +78,10 @@ def process_ask(request: AskRequest) -> dict[str, str]:
 
     if decision.intent == IntentLabel.SMALL_TALK:
         response_text = generate_small_talk_response(request.question, request.model.value)
+        return build_response_payload(response_text, decision)
+
+    if decision.intent == IntentLabel.FINANCE_QUOTE:
+        response_text = await render_quote_response(request.question)
         return build_response_payload(response_text, decision)
 
     if decision.intent == IntentLabel.MEMORY_WRITE:
