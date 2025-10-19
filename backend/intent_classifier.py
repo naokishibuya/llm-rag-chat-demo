@@ -16,6 +16,7 @@ import logging
 import re
 from dataclasses import dataclass
 from enum import StrEnum
+from finance_quotes import extract_symbol
 from llm_cache import get_ollama_llm
 
 
@@ -27,6 +28,7 @@ class IntentLabel(StrEnum):
 
     QA = "qa"  # question over knowledge base
     SMALL_TALK = "small_talk"  # chit-chat, pleasantries, etc.
+    FINANCE_QUOTE = "finance_quote"  # financial quote lookup
     SEARCH = "search"  # explicit request to search/browse external data
     MEMORY_WRITE = "memory_write"  # user asking to store or remember info
     ESCALATE = "escalate"  # requires human hand-off or different channel
@@ -89,6 +91,12 @@ _MEMORY_WRITE_PATTERNS = [
     re.compile(r"\bsave (this|that|my)\b", re.IGNORECASE),
 ]
 
+_FINANCE_KEYWORD_PATTERNS = [
+    re.compile(r"\b(stock|share)s?\s+(?:price|quote)\b", re.IGNORECASE),
+    re.compile(r"\b(?:price|quote)\s+(?:for|of)\s+[A-Za-z]{1,5}\b", re.IGNORECASE),
+    re.compile(r"\bticker\b", re.IGNORECASE),
+]
+
 _SEARCH_PATTERNS = [
     re.compile(r"\bgoogle\b", re.IGNORECASE),
     re.compile(r"\bsearch for\b", re.IGNORECASE),
@@ -116,6 +124,13 @@ def _run_heuristics(user_text: str) -> IntentResult | None:
     for pattern in _SEARCH_PATTERNS:
         if pattern.search(user_text):
             return IntentResult(intent=IntentLabel.SEARCH, rationale="Explicit search request.")
+
+    symbol = extract_symbol(user_text)
+    if symbol and any(pattern.search(user_text) for pattern in _FINANCE_KEYWORD_PATTERNS):
+        return IntentResult(
+            intent=IntentLabel.FINANCE_QUOTE,
+            rationale=f"Finance quote request detected for {symbol}.",
+        )
 
     if len(user_text.split()) <= 3 and user_text.endswith("?"):
         return IntentResult(intent=IntentLabel.SMALL_TALK, rationale="Short question likely chit-chat.")
@@ -162,13 +177,14 @@ def _build_intent_prompt(user_text: str) -> str:
 You are an intent classification service that maps user utterances to the supported intents.
 Always respond with a JSON object formatted like:
 {{
-  "intent": "<one_of: qa | small_talk | search | memory_write | escalate | bad>",
+  "intent": "<one_of: qa | small_talk | finance_quote | search | memory_write | escalate | bad>",
   "rationale": "<short natural language explanation>"
 }}
 
 Guidance:
 - `qa`: informational question requiring retrieval over the knowledge base.
 - `small_talk`: greetings, casual chat without factual lookup.
+- `finance_quote`: user wants a stock/finance price lookup over external tools.
 - `search`: explicit instructions to search the web or an external catalog.
 - `memory_write`: the user wants the assistant to remember or store future data.
 - `escalate`: safety-sensitive or operational issue that should be routed to a human.

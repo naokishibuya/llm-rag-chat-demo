@@ -1,4 +1,4 @@
-# LLM RAG Chat Demo
+# LLM RAG Chat Demo with MCP
 
 ## Overview
 
@@ -11,10 +11,11 @@ This project is a **full-stack Retrieval-Augmented Generation (RAG) chat demo** 
 * **LLM:** Models served locally via Ollama (Mistral, GPT-OSS)
 * **Embeddings:** Hugging Face transformer model via HuggingFaceEmbedding
 * **Vector Database:** LlamaIndex SimpleVectorStore (in-memory, managed through VectorStoreIndex)
-* **Frameworks:** LangChain, LlamaIndex
+* **Frameworks:** LangChain, LlamaIndex, FastMCP
 
 **How it works:**
-The application ingests documents, converts them into vector embeddings, and stores them in a FAISS index. When a user asks a question, the system retrieves the most relevant text chunks and passes them — along with the query — to the Mistral model to generate accurate, context-aware responses.
+
+The application ingests documents, converts them into vector embeddings, and stores them in a FAISS index. When a user asks a question, the system retrieves the most relevant text chunks and passes them — along with the query — to the selected model to generate accurate, context-aware responses.
 
 ![](images/chat-mode.png)
 
@@ -43,6 +44,10 @@ The UI displays the classification and permission for each response so you can v
 
 ![](images/ask-mode.png)
 
+You can ask for stock price via the finance MCP (mock) service.
+
+![](images/mcp-finance.png)
+
 ## Installation
 
 Clone this repository:
@@ -57,19 +62,7 @@ Below, we assume you are in the root directory of the cloned repository whenever
 cd llm-rag-chat-demo
 ```
 
-## Setup the Backend
-
-Set up a Python virtual environment and install the required packages:
-
-```bash
-cd backend
-
-python3 -m venv venv
-source venv/bin/activate
-
-pip install --upgrade pip
-pip install -r requirements.txt
-```
+### Install Ollama and Download models
 
 Install curl (if not already installed)
 
@@ -101,9 +94,25 @@ ollama pull llama-guard3  # for content moderation
 
 `sudo systemctl restart ollama` if running as a service, or `ollama restart` if running it manually.
 
-## Run the Backend
+## The Backend
 
-Run the FastAPI server:
+### Setup the Backend
+
+Set up a Python virtual environment and install the required packages:
+
+```bash
+cd backend
+
+python3 -m venv venv
+source venv/bin/activate
+
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+### Run the Backend
+
+Run the FastAPI server from the `backend` directory:
 
 ```bash
 uvicorn main:app --reload
@@ -123,7 +132,53 @@ APP_LOG_LEVEL=DEBUG uvicorn main:app --reload
 
 For testing the backend, you can open `http://localhost:8000/docs` to interact with the API.
 
-## Setup the Frontend
+## MCP Services
+
+### Setup MCP Services
+
+Create and activate a separate virtual environment for the MCP servers, then install their dependencies. Open a new terminal window and then go to the `<project root>/services` folder:
+
+```bash
+cd services
+
+python3 -m venv venv
+source venv/bin/activate
+
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+### Run MCP Services
+
+MCP servers are treated as standalone processes. Activate the services environment in a separate terminal and start the toy finance server:
+
+```bash
+# in the services folder
+source venv/bin/activate
+python -m toy_finance.server
+```
+
+The server listens on `http://127.0.0.1:8030/mcp`. Keep this process running while the backend is live so finance quote requests can succeed.
+
+Alternatively, you can launch via the FastMCP CLI (the CLI imports the `mcp` object without running the module’s `__main__` block, so you must supply the connection settings explicitly):
+
+```bash
+cd services
+fastmcp run toy_finance/server.py:mcp \
+  --transport streamable-http \
+  --host 127.0.0.1 \
+  --port 8030 \
+  --path /mcp
+```
+
+You can also exercise the MCP API directly (after the server is running) with:
+
+```bash
+cd services
+python -m toy_finance.client
+```
+
+### Setup the Frontend
 
 Install Node + npm (if not already installed)
 
@@ -149,7 +204,7 @@ cd frontend
 npm install
 ```
 
-## Run the Frontend
+### Run the Frontend
 
 Start the React development server:
 

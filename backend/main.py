@@ -18,9 +18,9 @@ app.add_middleware(
 
 @app.post("/ask")
 async def ask_endpoint(request: AskRequest):
-    return ask_handler.process_ask(request)
+    return await ask_handler.process_ask(request)
 
 
 @app.post("/chat")
 async def chat_endpoint(request: ChatRequest):
-    return chat_handler.process_chat(request)
+    return await chat_handler.process_chat(request)
